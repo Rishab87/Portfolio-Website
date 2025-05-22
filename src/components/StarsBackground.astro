@@ -1,0 +1,405 @@
+---
+const {
+  starDensity = 0.00015,
+  allStarsTwinkle = true,
+  twinkleProbability = 0.7,
+  minTwinkleSpeed = 0.5,
+  maxTwinkleSpeed = 1,
+  shootingStarMinSpeed = 10,
+  shootingStarMaxSpeed = 30,
+  shootingStarMinDelay = 1200,
+  shootingStarMaxDelay = 4200,
+  starColor = "#9E00FF",
+  trailColor = "#2EB9DF",
+  starWidth = 10,
+  starHeight = 1,
+  className = ""
+} = Astro.props;
+---
+
+<div class={`space-background fixed inset-0 w-full h-full ${className}`}>
+  <canvas id="starsCanvas" class="stars-canvas"></canvas>
+  <svg id="shootingStarsSvg" class="shooting-stars-svg"></svg>
+</div>
+
+<style>
+  .space-background {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  .stars-canvas,
+  .shooting-stars-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+</style>
+
+<script is:inline define:vars={{ 
+  starDensity, 
+  allStarsTwinkle, 
+  twinkleProbability, 
+  minTwinkleSpeed, 
+  maxTwinkleSpeed,
+  shootingStarMinSpeed,
+  shootingStarMaxSpeed,
+  shootingStarMinDelay,
+  shootingStarMaxDelay,
+  starColor,
+  trailColor,
+  starWidth,
+  starHeight
+}}>
+(function() {
+  // Create a namespace for our stars background
+  if (!window.StarsBackground) {
+    window.StarsBackground = {
+      initialized: false,
+      stars: [],
+      shootingStars: [],
+      animationIds: {
+        render: null,
+        shooting: null
+      },
+      timeouts: [],
+      observer: null,
+      canvas: null,
+      ctx: null,
+      svg: null,
+      isDarkMode: false,
+      isRunning: false,
+
+      init() {
+        if (this.initialized) return;
+        
+        this.canvas = document.getElementById('starsCanvas');
+        this.svg = document.getElementById('shootingStarsSvg');
+        
+        if (!this.canvas || !this.svg) {
+          // Elements not ready, try again later
+          setTimeout(() => this.init(), 100);
+          return;
+        }
+        
+        this.ctx = this.canvas.getContext('2d');
+        this.isDarkMode = document.documentElement.classList.contains('dark');
+        
+        this.setupThemeObserver();
+        this.setupEventListeners();
+        this.initializeStars();
+        this.initializeShootingStars();
+        this.start();
+        
+        this.initialized = true;
+      },
+
+      setupThemeObserver() {
+        if (this.observer) return;
+        
+        this.observer = new MutationObserver((mutations) => {
+          mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+              this.isDarkMode = document.documentElement.classList.contains('dark');
+            }
+          });
+        });
+        
+        this.observer.observe(document.documentElement, { attributes: true });
+      },
+
+      setupEventListeners() {
+        window.addEventListener('resize', () => this.handleResize());
+        
+        // Handle Astro page transitions
+        document.addEventListener('astro:before-swap', () => this.pause());
+        document.addEventListener('astro:after-swap', () => {
+          setTimeout(() => {
+            this.resume();
+          }, 100);
+        });
+        
+        // Handle visibility changes
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            this.pause();
+          } else {
+            this.resume();
+          }
+        });
+      },
+
+      generateStars(width, height) {
+        const area = width * height;
+        const numStars = Math.floor(area * starDensity);
+        return Array.from({ length: numStars }, () => {
+          const shouldTwinkle = allStarsTwinkle || Math.random() < twinkleProbability;
+          return {
+            x: Math.random() * width,
+            y: Math.random() * height,
+            radius: Math.random() * 0.05 + 0.5,
+            opacity: Math.random() * 0.5 + 0.5,
+            baseOpacity: Math.random() * 0.5 + 0.5,
+            twinkleSpeed: shouldTwinkle ? minTwinkleSpeed + Math.random() * (maxTwinkleSpeed - minTwinkleSpeed) : null,
+          };
+        });
+      },
+
+      initializeStars() {
+        if (!this.canvas || !this.ctx) return;
+        
+        const { width, height } = this.canvas.getBoundingClientRect();
+        this.canvas.width = width;
+        this.canvas.height = height;
+        this.stars = this.generateStars(width, height);
+      },
+
+      handleResize() {
+        if (!this.canvas) return;
+        
+        const { width, height } = this.canvas.getBoundingClientRect();
+        this.canvas.width = width;
+        this.canvas.height = height;
+        this.stars = this.generateStars(width, height);
+      },
+
+      renderStars() {
+        if (!this.ctx || !this.canvas || !this.isRunning) return;
+        
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.stars.forEach((star) => {
+          this.ctx.beginPath();
+          this.ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+          
+          let currentOpacity = star.baseOpacity;
+          if (star.twinkleSpeed !== null) {
+            currentOpacity = 0.5 + Math.abs(Math.sin((Date.now() * 0.001) / star.twinkleSpeed) * 0.5);
+          }
+          
+          const starColor = this.isDarkMode ? 
+            `rgba(255, 255, 255, ${currentOpacity})` : 
+            `rgba(59, 130, 246, ${currentOpacity})`;
+          
+          this.ctx.fillStyle = starColor;
+          this.ctx.fill();
+        });
+
+        if (this.isRunning) {
+          this.animationIds.render = requestAnimationFrame(() => this.renderStars());
+        }
+      },
+
+      initializeShootingStars() {
+        if (!this.svg) return;
+        
+        // Clear existing content
+        this.svg.innerHTML = '';
+        
+        // Create gradient definition
+        const svgNS = "http://www.w3.org/2000/svg";
+        const defs = document.createElementNS(svgNS, "defs");
+        const gradient = document.createElementNS(svgNS, "linearGradient");
+        gradient.setAttribute("id", "shootingStarGradient");
+        gradient.setAttribute("x1", "0%");
+        gradient.setAttribute("y1", "0%");
+        gradient.setAttribute("x2", "100%");
+        gradient.setAttribute("y2", "100%");
+
+        const stop1 = document.createElementNS(svgNS, "stop");
+        stop1.setAttribute("offset", "0%");
+        stop1.setAttribute("stop-color", trailColor);
+        stop1.setAttribute("stop-opacity", "0");
+
+        const stop2 = document.createElementNS(svgNS, "stop");
+        stop2.setAttribute("offset", "100%");
+        stop2.setAttribute("stop-color", starColor);
+        stop2.setAttribute("stop-opacity", "1");
+
+        gradient.appendChild(stop1);
+        gradient.appendChild(stop2);
+        defs.appendChild(gradient);
+        this.svg.appendChild(defs);
+        
+        this.scheduleNextShootingStar();
+      },
+
+      getRandomStartPoint() {
+        const side = Math.floor(Math.random() * 4);
+        const offset = Math.random() * window.innerWidth;
+
+        switch (side) {
+          case 0: return { x: offset, y: 0, angle: 45 };
+          case 1: return { x: window.innerWidth, y: offset, angle: 135 };
+          case 2: return { x: offset, y: window.innerHeight, angle: 225 };
+          case 3: return { x: 0, y: offset, angle: 315 };
+          default: return { x: 0, y: 0, angle: 45 };
+        }
+      },
+
+      createShootingStar() {
+        if (!this.svg || !this.isRunning) return;
+        
+        const { x, y, angle } = this.getRandomStartPoint();
+        const star = {
+          id: Date.now() + Math.random(),
+          x,
+          y,
+          angle,
+          scale: 1,
+          speed: Math.random() * (shootingStarMaxSpeed - shootingStarMinSpeed) + shootingStarMinSpeed,
+          distance: 0,
+          element: null,
+          active: true
+        };
+
+        const svgNS = "http://www.w3.org/2000/svg";
+        const rect = document.createElementNS(svgNS, "rect");
+        rect.setAttribute("x", x);
+        rect.setAttribute("y", y);
+        rect.setAttribute("width", starWidth);
+        rect.setAttribute("height", starHeight);
+        rect.setAttribute("fill", "url(#shootingStarGradient)");
+        rect.setAttribute("transform", `rotate(${angle}, ${x + starWidth/2}, ${y + starHeight/2})`);
+        
+        this.svg.appendChild(rect);
+        star.element = rect;
+        this.shootingStars.push(star);
+        
+        this.scheduleNextShootingStar();
+      },
+
+      scheduleNextShootingStar() {
+        if (!this.isRunning) return;
+        
+        const randomDelay = Math.random() * (shootingStarMaxDelay - shootingStarMinDelay) + shootingStarMinDelay;
+        const timeoutId = setTimeout(() => {
+          this.createShootingStar();
+        }, randomDelay);
+        
+        this.timeouts.push(timeoutId);
+      },
+
+      updateShootingStars() {
+        if (!this.svg || !this.isRunning) return;
+        
+        this.shootingStars = this.shootingStars.filter(star => {
+          if (!star.active) return false;
+          
+          const newX = star.x + star.speed * Math.cos((star.angle * Math.PI) / 180);
+          const newY = star.y + star.speed * Math.sin((star.angle * Math.PI) / 180);
+          const newDistance = star.distance + star.speed;
+          const newScale = 1 + newDistance / 100;
+
+          if (newX < -50 || newX > window.innerWidth + 50 || newY < -50 || newY > window.innerHeight + 50) {
+            if (star.element && this.svg.contains(star.element)) {
+              this.svg.removeChild(star.element);
+            }
+            star.active = false;
+            return false;
+          }
+
+          star.x = newX;
+          star.y = newY;
+          star.distance = newDistance;
+          star.scale = newScale;
+
+          if (star.element) {
+            const scaledWidth = starWidth * newScale;
+            star.element.setAttribute("x", newX);
+            star.element.setAttribute("y", newY);
+            star.element.setAttribute("width", scaledWidth);
+            star.element.setAttribute("transform", `rotate(${star.angle}, ${newX + scaledWidth/2}, ${newY + starHeight/2})`);
+          }
+          
+          return true;
+        });
+
+        if (this.isRunning) {
+          this.animationIds.shooting = requestAnimationFrame(() => this.updateShootingStars());
+        }
+      },
+
+      start() {
+        if (this.isRunning) return;
+        
+        this.isRunning = true;
+        this.renderStars();
+        this.updateShootingStars();
+      },
+
+      pause() {
+        this.isRunning = false;
+        
+        if (this.animationIds.render) {
+          cancelAnimationFrame(this.animationIds.render);
+          this.animationIds.render = null;
+        }
+        
+        if (this.animationIds.shooting) {
+          cancelAnimationFrame(this.animationIds.shooting);
+          this.animationIds.shooting = null;
+        }
+        
+        this.timeouts.forEach(id => clearTimeout(id));
+        this.timeouts = [];
+      },
+
+      resume() {
+        if (!this.initialized) {
+          this.init();
+          return;
+        }
+        
+        // Re-get elements in case they changed
+        this.canvas = document.getElementById('starsCanvas');
+        this.svg = document.getElementById('shootingStarsSvg');
+        
+        if (this.canvas) {
+          this.ctx = this.canvas.getContext('2d');
+          this.initializeStars();
+        }
+        
+        if (this.svg) {
+          this.initializeShootingStars();
+        }
+        
+        this.start();
+      },
+
+      cleanup() {
+        this.pause();
+        
+        if (this.observer) {
+          this.observer.disconnect();
+          this.observer = null;
+        }
+        
+        window.removeEventListener('resize', this.handleResize);
+        
+        this.shootingStars = [];
+        this.initialized = false;
+      }
+    };
+  }
+
+  // Initialize when DOM is ready
+  function initializeWhenReady() {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => window.StarsBackground.init(), 50);
+      });
+    } else {
+      setTimeout(() => window.StarsBackground.init(), 50);
+    }
+  }
+
+  initializeWhenReady();
+})();
+</script>
