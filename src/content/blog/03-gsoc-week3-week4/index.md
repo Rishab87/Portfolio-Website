@@ -1,7 +1,7 @@
 ---
 title: "GSoC 2025 Week 3 & 4"
 description: "Started 3D thermal"
-date: "June 15 2025"
+date: "July 4 2025"
 ---
 
 A bit late on this one, here's my progress so far.
