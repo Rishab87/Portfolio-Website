@@ -20,6 +20,6 @@ Here’s what I’ve done so far:
 
 - [2D & 3D Heatmaps](https://github.com/Rishab87/PyBaMM/pull/3): I also started working on adding 2D & 3D heatmap in PyBaMM, its almost done too. (currently it's on my own fork as 3D thermal PR is still being actively reviewed).
 
-- Challenges: I was facing few challenges with BCs in thermal model & also I was getting weird values in the heatmap of 3D pouch cell. My mentor helped me deubg it, the problem was pretty simple, source terms in the model needed to be explicitly wrapped in `pybamm.source` so they get multiplied by the mass matrix.
+- Challenges: I was facing few challenges with BCs in thermal model & also I was getting weird values in the heatmap of 3D pouch cell. My mentor helped me debug it, the problem was pretty simple, source terms in the model needed to be explicitly wrapped in `pybamm.source` so they get multiplied by the mass matrix.
 
 In week 5 & 6, I planned to just get started with 3D thermal model & the whole project is about to get over. So pretty much on track again.
