@@ -1,7 +1,7 @@
 ---
 title: "GSoC 2025 Week 7 & 8"
 description: "Completed the project and faced some issues."
-date: "July 21 2025"
+date: "August 3 2025"
 ---
 
 So I completed my project & faced few non-deterministic issues in CI.
