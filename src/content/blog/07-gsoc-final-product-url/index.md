@@ -356,6 +356,7 @@ plt.show()
 ```
 
 ![uniform_cooling.gif](https://personal-gigs.s3.ap-south-1.amazonaws.com/GSoC'25/uniform_air_cooling.gif)
+(open in new tab for gif animation)
 
 ##### Base Cooling
 
@@ -395,6 +396,7 @@ plt.show()
 ```
 
 ![base_cooling.gif](https://personal-gigs.s3.ap-south-1.amazonaws.com/GSoC'25/base_cooling.gif)
+(open in new tab for gif animation)
 
 #### 4. Comparative Analysis
 
