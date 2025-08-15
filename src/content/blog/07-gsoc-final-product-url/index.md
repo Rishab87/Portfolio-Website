@@ -4,16 +4,16 @@ description: "This is my final outcome of the gsoc project showed with a case st
 date: "August 25 2025"
 ---
 
-As GSoC 2025 comes to an end, here is my final working outcome of the project. I've showed this with a help of a real world use case of it. In this case study we'll compare two techniques for cooling batteries in EVs and will draw out a conclusion which is better.
+As GSoC 2025 comes to an end, here is my final working outcome of the project. I've showed this with a help of a real world use case. In this case study we'll compare two techniques for cooling batteries in EVs and will draw out a conclusion which is better.
 
 ### Context of project:
 
-For my Google Summer of Code project, I'm adding a cool new feature to PyBaMM. My goal is to let it run 3D thermal simulations that work together with its battery models. This will help us understand how batteries heat up in 3D.
+For my Google Summer of Code project, I've added a cool new feature to PyBaMM. My goal is to let it run 3D thermal simulations that work together with its battery models. This will help us understand how batteries heat up in 3D.
 
 ### Work So Far:
 
-Before beginning with the case study, here are all my PRs I worked on if you want to have a look:
-- [3D FEM](https://github.com/pybamm-team/PyBaMM/pull/5009): Added support for 3D Submeshes and 3D Scikit Finite Element Method.
+Before beginning the case study, here are all my PRs I worked on:
+- [3D FEM](https://github.com/pybamm-team/PyBaMM/pull/5009): Added 3D Submeshes and 3D Finite Element Method.
 - [3D Thermal Model](https://github.com/pybamm-team/PyBaMM/pull/5112): Added `Basic3DThermalSPM` model with two way coupling.
 - [2D & 3D Heatmaps](https://github.com/pybamm-team/PyBaMM/pull/5130): Added `plot_3d_cross_section` & `plot_3d_heatmap functions` to support plotting for 3D thermal simulation.
 
@@ -42,7 +42,7 @@ Effective thermal management is critical for the safety, performance, and lifesp
 
 #### 2. Running the Simulations
 
-We will run two separate simulations, one for each cooling strategy. All electrochemical parameters and the discharge profile (3C) will be kept identical to ensure a fair comparison.
+We will run two separate simulations, one for each cooling strategy. All electrochemical parameters and the discharge profile (2C) will be kept identical to ensure a fair comparison.
 
 ##### ln[1]:
 
@@ -416,4 +416,4 @@ This case study demonstrates how 3D thermal modeling is a crucial tool for engin
 
 ### Final Thoughts
 
-This GSoC 2025 was an amazing experience, thanks to all my mentors for being so cool and guiding me throughout. Open source is fun! 
+This GSoC 2025 was an amazing experience, thanks to all my mentors for being so cool and guiding me throughout this project. I am really enjoying the overall open source experience! 
