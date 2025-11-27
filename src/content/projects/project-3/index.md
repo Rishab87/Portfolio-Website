@@ -1,6 +1,6 @@
 ---
 title: "Devops Capstone Project"
-description: "This is a devops capstone project."
+description: "A complete DevOps pipeline demonstrating CI/CD, IaC, containerization, orchestration, and monitoring."
 date: "July 15 2024"
 # demoURL: "https://codeitup.vercel.app/"
 repoURL: "https://github.com/Rishab87/devops-qr-code"
